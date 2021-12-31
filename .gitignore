@@ -2,4 +2,8 @@
 /src/SMC.Application/obj
 /src/SMC.Core/obj
 /src/SMC.Infrastructure/obj
+/src/SMC.API/bin
+/src/SMC.Application/bin
+/src/SMC.Core/bin
+/src/SMC.Infrastructure/bin
 /src/.vs

@@ -1,16 +1,18 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using SMC.Application.Handlers.CommandHandlers;
+using SMC.Core.Repositories;
+using SMC.Core.Repositories.Base;
+using SMC.Infrastructure.Data;
+using SMC.Infrastructure.Repositories;
+using SMC.Infrastructure.Repositories.Base;
 
 namespace SMC.API
 {
@@ -23,18 +25,19 @@ namespace SMC.API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "SMC.API", Version = "v1" });
-            });
+
+            services.AddDbContext<SMCContext>(m => m.UseSqlServer(Configuration.GetConnectionString("SMCDB"),c=>c.MigrationsAssembly("SMC.API")), ServiceLifetime.Singleton);
+            services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "SMC.API", Version = "v1" }); });
+
+            services.AddAutoMapper(typeof(Startup));
+            services.AddMediatR(typeof(CreateTaskHandler).GetTypeInfo().Assembly);
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddTransient<ITaskRepository, TaskRepository>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -50,10 +53,7 @@ namespace SMC.API
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
